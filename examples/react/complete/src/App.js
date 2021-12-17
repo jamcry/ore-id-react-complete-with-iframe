@@ -33,6 +33,7 @@ import {
   ETH_CHAIN_NETWORK
 } from './constants';
 import { composeAlgorandSampleTransaction } from './algorand';
+import OreIdIFrame from './iframe/OreIdIFrame';
 
 dotenv.config();
 
@@ -72,7 +73,8 @@ class App extends Component {
       userInfo: {},
       sendEthForGas: false,
       showWidget: false,
-      webWidgetProps: {}
+      webWidgetProps: {},
+      oreIdUrl: null
     };
     this.handleLogin = this.handleLogin.bind(this);
     this.handleLogout = this.handleLogout.bind(this);
@@ -184,7 +186,9 @@ class App extends Component {
       let { isLoggedIn, account, loginUrl } = loginResponse;
       if (loginUrl) {
         // redirect browser to loginURL
-        window.location = loginUrl;
+        // window.location = loginUrl;
+
+        this.setState({oreIdUrl: loginUrl})
       }
       this.setState({ userInfo: { accountName: account }, isLoggedIn, loggedProvider: provider });
     } catch (error) {
@@ -256,7 +260,8 @@ class App extends Component {
         signResponse || {};
       if (signUrl) {
         // redirect browser to signUrl
-        window.location = signUrl;
+        // window.location = signUrl;
+        this.setState({oreIdUrl: signUrl})
       }
       if (signedTransaction) {
         this.setState({
@@ -488,6 +493,7 @@ class App extends Component {
     return (
       <div>
         <div>
+          {this.state.oreIdUrl && this.renderIFrame()}
           {!isLoggedIn && this.renderLoginButtons()}
           {isLoggedIn && this.renderUserInfo()}
           {isLoggedIn && this.renderSigningOptions()}
@@ -718,6 +724,23 @@ class App extends Component {
       </div>
     );
   });
+
+  renderIFrame() {
+    return (
+      <OreIdIFrame
+        oreId={this.oreId}
+        oreIdUrl={this.state.oreIdUrl}
+        onSuccess={(data)=>{
+          if(data.user) {
+            window.alert(`Successfully logged in with: ${data.user.email}`);
+          }
+          if(data.signedTxn) {
+            window.alert(`Successfully signed txn: ${JSON.stringify(data.signedTxn)}`);
+          }
+        }}
+        onError={(errMsg)=>{window.alert(`Error: ${errMsg}`)}} />
+    )
+  }
 
   renderLoginButtons() {
     const buttonStyle = { width: 200, marginTop: '24px' };
